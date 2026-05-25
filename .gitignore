@@ -1,0 +1,5 @@
+client/node_modules/
+client/dist/
+client/tsconfig.tsbuildinfo
+server/projects/*
+!server/projects/.gitkeep
