@@ -1,0 +1,93 @@
+You are a full-stack developer building a stop-motion animation web application. Produce a complete, runnable project with the following requirements.
+
+## Core Functionality
+- Users upload/select a sequence of images (PNG, JPG, WebP).
+- Set playback FPS (frame rate).
+- Generate a stop-motion video preview in the browser.
+- Export the final result as an animated GIF.
+
+## Image Editing (per-frame or global)
+- Brightness
+- Contrast
+- Shadows / highlights
+- Basic lighting adjustments
+
+## Video Processing
+- Crop region selection (define x, y, width, height) applied to all frames.
+- Video stabilization (optional, via ffmpeg's vidstabdetect / vidstabtransform or equivalent).
+
+## Tech Stack
+
+### Server-Side: Deno.js
+- Serve the frontend and a JSON-based REST API.
+- Spawn ffmpeg as a subprocess for video encoding, GIF export, stabilization, and cropping.
+- No database — persist projects/settings as flat JSON files on disk under a `projects/` directory.
+- `deno task start` must:
+  1. Check that ffmpeg is available on PATH (warn and exit cleanly if missing).
+  2. Install/verify frontend dependencies (npm install in the client directory).
+  3. Build the Vue frontend (if needed).
+  4. Start the Deno HTTP server on a configurable port (default 3000).
+
+### Front-End: Vue.js 3 (Composition API)
+- Single-page application.
+- Intuitive, minimal UI — not cluttered.
+- Feature panels are toggleable **overlay windows** that are:
+  - Draggable (drag by title bar).
+  - Resizable (drag from corners/edges).
+  - Minimizable / closeable.
+  - Stackable with z-index management.
+- Panels include: Image Sequencer (upload, reorder, delete frames), Playback Controls (FPS, play/pause, timeline scrub), Image Adjustments (brightness, contrast, shadows, lights), Crop Tool (drag handles on preview), Export (GIF settings, download button).
+
+## API Endpoints (Deno)
+| Method | Path | Description |
+|--------|------|-------------|
+| POST   | /api/projects | Create a new project |
+| GET    | /api/projects/:id | Get project state |
+| POST   | /api/projects/:id/frames | Upload frames (multipart) |
+| DELETE | /api/projects/:id/frames/:frameId | Remove a frame |
+| PUT    | /api/projects/:id/frames/reorder | Update frame order |
+| POST   | /api/projects/:id/preview | Generate an mp4/webm preview |
+| POST   | /api/projects/:id/export | Export as GIF with current settings |
+| PUT    | /api/projects/:id/settings | Update FPS, crop, adjustments |
+
+## Project Structure
+```
+/
+├── deno.json          (task definitions: start, dev)
+├── server/
+│   ├── main.ts        (entry point, static file serving, API router)
+│   ├── routes/
+│   ├── services/
+│   │   └── ffmpeg.ts  (ffmpeg subprocess wrapper)
+│   └── projects/      (JSON project files stored here, gitignored)
+├── client/
+│   ├── package.json
+│   ├── vite.config.ts
+│   ├── src/
+│   │   ├── App.vue
+│   │   ├── main.ts
+│   │   ├── components/
+│   │   │   ├── OverlayWindow.vue    (reusable draggable/resizable panel)
+│   │   │   ├── FrameSequencer.vue
+│   │   │   ├── PlaybackControls.vue
+│   │   │   ├── ImageAdjustments.vue
+│   │   │   ├── CropTool.vue
+│   │   │   └── ExportPanel.vue
+│   │   ├── composables/
+│   │   │   ├── useProject.ts
+│   │   │   └── useDragResize.ts
+│   │   └── api/
+│   │       └── index.ts
+│   └── index.html
+└── README.md
+```
+
+## Constraints
+- Single command startup: `deno task start` handles everything.
+- No database — all state is JSON files.
+- ffmpeg must be the only system dependency beyond Deno and Node/npm.
+- Graceful error handling: if ffmpeg is missing, show a clear message on startup and in the UI.
+- The preview uses a lightweight approach (generate an mp4 via ffmpeg and serve it, or render frames in-browser with canvas).
+
+## Output
+Provide all source files complete and ready to run. Include a README with setup instructions. The code should be modular, well-structured, and production-quality. Do not use placeholder comments — every function must be fully implemented.
